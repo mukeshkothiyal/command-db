@@ -9,4 +9,4 @@ Can be used to test connectivity, driver configuration in Java based application
 Currently supports postgres driver, edb driver
 
 <h4>Command Line Execution</h4>
-java -jar target/test-db-0.0.1-SNAPSHOT.JAR sql <sql-query>
+java -jar target/command-db-0.0.1-SNAPSHOT.JAR sql <sql-query>

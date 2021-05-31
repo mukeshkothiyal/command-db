@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.muk.fkp</groupId>
-	<artifactId>test-db</artifactId>
+	<artifactId>command-db</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>test-db</name>
 	<description>Run scripts from console</description>
