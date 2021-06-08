@@ -12,7 +12,7 @@ import java.sql.Statement;
 
 @Slf4j
 @Repository
-public class PgDbRepo {
+public class JdbcRepo {
 
   @Value("${spring.datasource.url}")
   String connUrl;
@@ -26,6 +26,28 @@ public class PgDbRepo {
   @Value("${spring.datasource.driver-class-name}")
   String dbDriver;
 
+  public void create(String query) {
+    try {
+      Class.forName(dbDriver);
+      Connection con = DriverManager.getConnection(connUrl, username, pwd);
+      Statement stmt = con.createStatement();
+      long startTime = System.nanoTime();
+      stmt.execute(query);
+      long end = System.nanoTime();
+      log.info("Total time taken : " + (end - startTime) / 1000000 + " ms");
+//      rs.close();
+//      stmt.close();
+//      con.close();
+      log.info("Command successfully executed");
+    } catch (ClassNotFoundException e) {
+      log.error("Class Not Found : " + e.getMessage());
+    } catch (SQLException exp) {
+      log.error("SQL Exception: " + exp.getMessage());
+      log.error("SQL State:     " + exp.getSQLState());
+      log.error("Vendor Error:  " + exp.getErrorCode());
+    }
+  }
+
   public ResultSet fetchData(String query) {
     ResultSet rs = null;
     try {
@@ -35,7 +57,7 @@ public class PgDbRepo {
       long startTime = System.nanoTime();
       rs = stmt.executeQuery(query);
       long end = System.nanoTime();
-      System.out.println("Total time taken : " + (end - startTime) / 1000000 + " ms");
+      log.info("Total time taken : " + (end - startTime) / 1000000 + " ms");
 //      rs.close();
 //      stmt.close();
 //      con.close();

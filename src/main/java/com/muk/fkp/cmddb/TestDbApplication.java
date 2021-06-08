@@ -1,6 +1,6 @@
 package com.muk.fkp.cmddb;
 
-import com.muk.fkp.cmddb.service.PgDbService;
+import com.muk.fkp.cmddb.service.DbService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,10 +8,11 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @SpringBootApplication
@@ -22,8 +23,12 @@ public class TestDbApplication implements CommandLineRunner {
   @Value("${custom.record.limit}")
   String rsLimit;
 
+  private DbService dbService;
+
   @Autowired
-  PgDbService dbService;
+  public TestDbApplication(DbService dbService) {
+    this.dbService = dbService;
+  }
 
   public static void main(String[] args) {
     SpringApplication.run(TestDbApplication.class, args);
@@ -35,45 +40,29 @@ public class TestDbApplication implements CommandLineRunner {
       log.error("Invalid arguments passed");
     } else {
       String type = args[0];
+      String query;
       switch (type) {
-        case "sql":
-          String query = args[1] + " limit " + rsLimit;
-          System.out.println("Query created is: " + query);
-          ResultSet rs = dbService.fetchData(query);
-
-          // add header for query
-          try {
-            int i = 1;
-            while (true) {
-              System.out.print(rs.getMetaData().getColumnName(i));
-              System.out.print("(" + rs.getMetaData().getColumnTypeName(i).toUpperCase() + ")");
-              System.out.print(",");
-              i++;
-            }
-          } catch (Exception e) {
-            System.out.println();
-          }
-
-          // add content for query
-          while (rs.next()) {
-            try {
-              int i = 1;
-              while (true) {
-                if (UNSUPPORTED_DATA_TYPES.contains(rs.getMetaData().getColumnType(i))) {
-                  System.out.print(rs.getMetaData().getColumnTypeName(i).toUpperCase() + " NOT SUPPORTED");
-                } else {
-                  System.out.print(rs.getObject(i));
-                }
-                System.out.print(",");
-                i++;
-              }
-            } catch (Exception e) {
-              System.out.println();
-            }
-          }
+        case "C":
+          query = args[1];
+          log.info("Create query is : " + query);
+          this.dbService.create(query);
           break;
-        case "misc":
-          log.warn("Not implemented yet!!!");
+        case "R":
+          query = args[1] + " limit " + rsLimit;
+          log.info("Select query is : " + query);
+          List<Map<String, Object>> rs = this.dbService.fetchData(query);
+          AtomicBoolean isHeader = new AtomicBoolean(true);
+          rs.stream().forEach(dataMap -> {
+            if (isHeader.get()) {
+              log.info(dataMap.keySet().toString());
+            }
+            log.info(dataMap.values().toString());
+            isHeader.set(false);
+          });
+
+          break;
+        default:
+          log.warn("Please provide appropriate type in command line!!!");
           break;
       }
     }
